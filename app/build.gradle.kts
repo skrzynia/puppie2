@@ -27,6 +27,10 @@ android {
             )
         }
     }
+
+    buildFeatures {
+        viewBinding = true
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -42,6 +46,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("org.mongodb:mongodb-driver-kotlin-sync:4.11.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    implementation("com.google.firebase:firebase-auth")
     implementation("org.mongodb:mongodb-driver-kotlin-coroutine:4.10.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.cardview:cardview:1.0.0")
