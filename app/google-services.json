@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "892833398917",
+    "project_id": "androidpuppie",
+    "storage_bucket": "androidpuppie.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:892833398917:android:04c3ebaf40bfc42cbfa9ec",
+        "android_client_info": {
+          "package_name": "com.wit.puppie2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBIcajiX00G1mJ7raLtlBQMpRQCYeUZ9TI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
