@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
     <application
-        android:name="org.wit.placemark.main.MainApp"
+        android:name=".main.MainActivity"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -21,11 +21,7 @@
         android:supportsRtl="true"
         tools:targetApi="31">
         <activity
-            android:name="org.wit.puppie.activities.AddPlacemark"
-            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
-            android:exported="false" />
-        <activity
-            android:name="org.wit.puppie.activities.PlacemarkDetails"
+            android:name="activities.RegisterActivity"
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
             android:exported="false" />
         <meta-data
@@ -33,7 +29,7 @@
             android:value="${MAPS_API_KEY}" />
 
         <activity
-            android:name="org.wit.puppie.activities.ListAllPlacemarks"
+            android:name="activities.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
