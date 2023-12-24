@@ -1,5 +1,6 @@
 package org.wit.puppie2.activities
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.EditText
 import android.widget.Toast
@@ -33,6 +34,7 @@ import androidx.compose.ui.graphics.Color.Companion.Cyan
 import androidx.compose.ui.graphics.Color.Companion.Blue
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -60,15 +62,22 @@ class LoginActivity: ComponentActivity(){
 
 
         setContent {
+            var email by remember {
+                mutableStateOf("")
+            }
+            var password by remember {
+                mutableStateOf("")
+            }
+
             Column(modifier = Modifier.fillMaxSize()){
                 createTitle()
-                createEmailInput(email = "")
-                createPasswordInput(password = "")
+                createEmailInput(email = email, onValueChange = {email = it})
+                createPasswordInput(password = password, onValueChange = {password = it})
                 Row(modifier = Modifier
                     .offset(y = 300.dp)
                     .fillMaxWidth(),
                     horizontalArrangement = Arrangement.Absolute.SpaceEvenly){
-                    showLoginButton()
+                    showLoginButton(email, password)
                     showRegisterButton()
                 }
 
@@ -83,7 +92,7 @@ class LoginActivity: ComponentActivity(){
         Text(text = "Puppie 2",
             textAlign = TextAlign.Center,
             modifier = Modifier
-                .offset(y= 100.dp)
+                .offset(y = 100.dp)
                 .fillMaxWidth(),
             fontSize = 30.sp,
             style = TextStyle(
@@ -96,12 +105,10 @@ class LoginActivity: ComponentActivity(){
     }
     
     @Composable
-    fun createEmailInput(email:String){
-
-        var email by remember { mutableStateOf("")}
+    fun createEmailInput(email:String, onValueChange: (String) -> Unit){
 
         OutlinedTextField(value = email,
-            onValueChange = {email = it},
+            onValueChange = onValueChange,
             label = {Text("E-mail")},
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier
@@ -109,11 +116,10 @@ class LoginActivity: ComponentActivity(){
                 .fillMaxWidth())
     }
     @Composable
-    fun createPasswordInput(password: String){
-        var password by remember { mutableStateOf("") }
+    fun createPasswordInput(password: String, onValueChange: (String) -> Unit){
 
         OutlinedTextField(value = password,
-            onValueChange ={password = it},
+            onValueChange =onValueChange,
             label = {Text("Password")},
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier
@@ -121,35 +127,36 @@ class LoginActivity: ComponentActivity(){
                 .fillMaxWidth())
     }
     @Composable
-    fun showLoginButton(){
-        FilledTonalButton(onClick = { /*TODO*/ }) {
+    fun showLoginButton(email: String, password: String){
+        FilledTonalButton(onClick = { loginAccount(email, password) }) {
             Text(text = "Login")
         }
     }
     @Composable
     fun showRegisterButton(){
-        Button(onClick = { /*TODO*/ }) {
+        val context = LocalContext.current
+        Button(onClick = { context.startActivity(Intent(context, RegisterActivity::class.java))}) {
             Text(text = "Register")
         }
     }
 
-    @Preview
-    @Composable
-    fun uiPreview() {
-        Column(modifier = Modifier.fillMaxSize()){
-            createTitle()
-            createEmailInput(email = "skrzynia777@gmail.com")
-            createPasswordInput(password = "")
-            Row(modifier = Modifier
-                .offset(y = 300.dp)
-                .fillMaxWidth(),
-                horizontalArrangement = Arrangement.Absolute.SpaceEvenly){
-                showLoginButton()
-                showRegisterButton()
-            }
-
-        }
-    }
+//    @Preview
+//    @Composable
+//    fun uiPreview() {
+//        Column(modifier = Modifier.fillMaxSize()){
+//            createTitle()
+//            createEmailInput()
+//            createPasswordInput(password = "")
+//            Row(modifier = Modifier
+//                .offset(y = 300.dp)
+//                .fillMaxWidth(),
+//                horizontalArrangement = Arrangement.Absolute.SpaceEvenly){
+//                showLoginButton()
+//                showRegisterButton()
+//            }
+//
+//        }
+//    }
 
     override fun onStart() {
         super.onStart()
@@ -157,6 +164,11 @@ class LoginActivity: ComponentActivity(){
         if (currentUser != null) {
             reload()
         }
+    }
+
+    private fun loginAccount(email: String, password: String){
+        signIn(email, password)
+
     }
 
     private fun signIn(email: String, password: String) {
@@ -179,6 +191,7 @@ class LoginActivity: ComponentActivity(){
     private fun reload() {
     }
     private fun updateUI(user: FirebaseUser?) {
+        i("Dzialaaaaa!!!!!")
     }
 
 }

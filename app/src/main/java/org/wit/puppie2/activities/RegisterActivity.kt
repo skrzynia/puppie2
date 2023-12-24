@@ -1,8 +1,10 @@
 package org.wit.puppie2.activities
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,10 +25,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
@@ -34,20 +38,30 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.auth
 import org.wit.puppie2.main.MainActivity
 import timber.log.Timber
+import timber.log.Timber.Forest.i
 
 class RegisterActivity: ComponentActivity() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var app: MainActivity
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        auth = Firebase.auth
 
         app = application as MainActivity
+
+        setContent {
+            uiPreview()
+        }
     }
+
 
     @Composable
     fun createTitle() {
@@ -69,12 +83,10 @@ class RegisterActivity: ComponentActivity() {
     }
 
     @Composable
-    fun createEmailInput(email:String){
-
-        var email by remember { mutableStateOf("") }
+    fun createEmailInput(email:String, onValueChange: (String) -> Unit){
 
         OutlinedTextField(value = email,
-            onValueChange = {email = it},
+            onValueChange = onValueChange,
             label = { Text("E-mail") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier
@@ -82,11 +94,10 @@ class RegisterActivity: ComponentActivity() {
                 .fillMaxWidth())
     }
     @Composable
-    fun createPasswordInput(password: String){
-        var password by remember { mutableStateOf("") }
+    fun createPasswordInput(password: String, onValueChange: (String) -> Unit){
 
         OutlinedTextField(value = password,
-            onValueChange ={password = it},
+            onValueChange = onValueChange,
             label = { Text("Password") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier
@@ -111,8 +122,8 @@ class RegisterActivity: ComponentActivity() {
 
 
     @Composable
-    fun showRegisterButton(){
-        Button(onClick = { /*TODO*/ }) {
+    fun showRegisterButton(email: String, password: String){
+        Button(onClick = { registerNewAccount(email, password)}) {
             Text(text = "Register")
         }
     }
@@ -120,49 +131,58 @@ class RegisterActivity: ComponentActivity() {
     @Preview
     @Composable
     fun uiPreview() {
+
+        var email by rememberSaveable {
+            mutableStateOf("")
+        }
+        var password by rememberSaveable {
+            mutableStateOf("")
+        }
         TopAppBar {
             Icon(Icons.Rounded.ArrowBack, contentDescription = "Arrow_Back")
         }
         Column(modifier = Modifier.fillMaxSize()){
             createTitle()
-            createEmailInput(email = "skrzynia777@gmail.com")
-            createPasswordInput(password = "")
+            createEmailInput(email = email, onValueChange = {email = it})
+            createPasswordInput(password = password, onValueChange = {password = it})
             repeatPassword(password = "")
             Row(modifier = Modifier
                 .offset(y = 300.dp)
                 .fillMaxWidth(),
                 horizontalArrangement = Arrangement.Absolute.SpaceEvenly){
-                showRegisterButton()
+                showRegisterButton(email, password)
             }
 
         }
     }
 
 
-    override fun onStart() {
-        super.onStart()
-        val currentUser = auth.currentUser
-        if (currentUser != null) {
-            reload()
-        }
+    private fun registerNewAccount(email: String, password: String){
+        createAccount(email, password)
+        i("Email = " + email + "Password = " + password)
     }
+
     private fun createAccount(email:String, password:String) {
         auth.createUserWithEmailAndPassword(email,password)
             .addOnCompleteListener(this) {
                     task ->
                 if (task.isSuccessful) {
-                    Timber.i("Create user with email:success")
+                    i("Create user with email:success")
+                    Toast.makeText(baseContext, "User Registration success!!!!!", Toast.LENGTH_SHORT).show()
                     val user = auth.currentUser
                     updateUI(user)
                 } else {
-                    Timber.i("Create user with email: failure")
-                    Toast.makeText(baseContext, "Authentication failed.", Toast.LENGTH_SHORT).show()
+                    i("Create user with email: failure")
+                    Toast.makeText(baseContext, "User registration failed.", Toast.LENGTH_SHORT).show()
                     updateUI(null)
 
                 }
             }
     }
+
     private fun updateUI(user: FirebaseUser?) {
+        val intent = Intent(this, MainScreenActivity::class.java)
+        startActivity(intent)
     }
 
     private fun reload() {

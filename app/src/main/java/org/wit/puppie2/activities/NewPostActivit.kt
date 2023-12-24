@@ -22,16 +22,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.launch
+import timber.log.Timber.Forest.i
 
 class NewPostActivit: ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
         super.onCreate(savedInstanceState, persistentState)
+        i("Activity started")
 
         setContent{
             createScaffold()
         }
     }
+    @Preview
     @Composable
     fun createScaffold(){
 

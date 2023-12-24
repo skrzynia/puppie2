@@ -4,7 +4,9 @@ package org.wit.puppie2.activities
 import android.content.Intent
 import android.os.Bundle
 import android.os.PersistableBundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -42,26 +44,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color.Companion.LightGray
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
+import org.wit.puppie2.main.MainActivity
 import org.wit.puppie2.models.Person
 import org.wit.puppie2.models.Place
+import timber.log.Timber.Forest.i
 import java.time.LocalDate
 import java.util.Date
 
 class MainScreenActivity : ComponentActivity() {
+    private lateinit var app: MainActivity
 
     override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
         super.onCreate(savedInstanceState, persistentState)
+
+        app = application as MainActivity
+
+
+        setContent { uiPreview() }
     }
 
     @Composable
     fun createScaffold() {
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         val scope = rememberCoroutineScope()
+        val context = LocalContext.current
+
         val items = listOf("News", "Me")
         ModalNavigationDrawer(
             drawerState = drawerState ,
@@ -108,9 +121,7 @@ class MainScreenActivity : ComponentActivity() {
                 },
                 floatingActionButton = {
                     FloatingActionButton(
-                        onClick = { Intent(applicationContext, NewPostActivit::class.java).also {
-                            startActivity(it)
-                        } },
+                        onClick = { context.startActivity(Intent(context, NewPostActivit::class.java))},
                     ) {
                         Icon(Icons.Rounded.Add, "Add")
 
