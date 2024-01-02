@@ -5,7 +5,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.ThemedSpinnerAdapter.Helper
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,7 +20,7 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,8 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -42,20 +40,24 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
+import org.wit.puppie2.dao.FStorage
 import org.wit.puppie2.main.MainActivity
-import timber.log.Timber
+import org.wit.puppie2.models.Person
+import org.wit.puppie2.utilities.Helpers
 import timber.log.Timber.Forest.i
+import java.util.UUID
 
 class RegisterActivity: ComponentActivity() {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var app: MainActivity
-
+    private lateinit var firebase: FStorage
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         auth = Firebase.auth
+        firebase = FStorage()
 
-        app = application as MainActivity
+
 
         setContent {
             uiPreview()
@@ -139,7 +141,10 @@ class RegisterActivity: ComponentActivity() {
             mutableStateOf("")
         }
         TopAppBar {
-            Icon(Icons.Rounded.ArrowBack, contentDescription = "Arrow_Back")
+            TextButton(onClick = { backToLogin() }) {
+                Icon(Icons.Rounded.ArrowBack, contentDescription = "Arrow_Back")
+            }
+
         }
         Column(modifier = Modifier.fillMaxSize()){
             createTitle()
@@ -160,6 +165,10 @@ class RegisterActivity: ComponentActivity() {
     private fun registerNewAccount(email: String, password: String){
         createAccount(email, password)
         i("Email = " + email + "Password = " + password)
+        val person = Person(email)
+        val hashed = Helpers().getHashedString(auth.currentUser?.email.toString())
+        firebase.writeNewUser(personId = hashed,person=person.copy(name = "", surname = "",email=email, myPlace = listOf()))
+
     }
 
     private fun createAccount(email:String, password:String) {
@@ -182,6 +191,11 @@ class RegisterActivity: ComponentActivity() {
 
     private fun updateUI(user: FirebaseUser?) {
         val intent = Intent(this, MainScreenActivity::class.java)
+        startActivity(intent)
+    }
+
+    private fun backToLogin(){
+        val intent = Intent(this, LoginActivity::class.java)
         startActivity(intent)
     }
 
