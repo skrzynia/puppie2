@@ -1,24 +1,20 @@
 package org.wit.puppie2.activities
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
-import androidx.compose.material.TextField
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.runtime.Composable
@@ -26,20 +22,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Cyan
 import androidx.compose.ui.graphics.Color.Companion.Blue
-import androidx.compose.ui.graphics.Color.Companion.White
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.Firebase
@@ -62,6 +53,7 @@ class LoginActivity: ComponentActivity(){
 
 
         setContent {
+            val context = LocalContext.current
             var email by remember {
                 mutableStateOf("")
             }
@@ -74,10 +66,10 @@ class LoginActivity: ComponentActivity(){
                 createEmailInput(email = email, onValueChange = {email = it})
                 createPasswordInput(password = password, onValueChange = {password = it})
                 Row(modifier = Modifier
-                    .offset(y = 300.dp)
+                    .offset(y = 500.dp)
                     .fillMaxWidth(),
                     horizontalArrangement = Arrangement.Absolute.SpaceEvenly){
-                    showLoginButton(email, password)
+                    showLoginButton(email, password, context)
                     showRegisterButton()
                 }
 
@@ -127,15 +119,22 @@ class LoginActivity: ComponentActivity(){
                 .fillMaxWidth())
     }
     @Composable
-    fun showLoginButton(email: String, password: String){
-        FilledTonalButton(onClick = { loginAccount(email, password) }) {
+    fun showLoginButton(email: String, password: String, context: Context){
+        val context = LocalContext.current
+        FilledTonalButton(onClick = {
+            loginAccount(email, password, context)
+        }) {
             Text(text = "Login")
         }
     }
     @Composable
     fun showRegisterButton(){
         val context = LocalContext.current
-        Button(onClick = { context.startActivity(Intent(context, RegisterActivity::class.java))}) {
+        Button(onClick = {
+            val intent = Intent(context, RegisterActivity::class.java)
+            i("Context = $intent")
+            context.startActivity(Intent(context, RegisterActivity::class.java))
+        }) {
             Text(text = "Register")
         }
     }
@@ -166,19 +165,22 @@ class LoginActivity: ComponentActivity(){
         }
     }
 
-    private fun loginAccount(email: String, password: String){
-        signIn(email, password)
+    private fun loginAccount(email: String, password: String, context: Context){
+        signIn(email, password, context)
 
     }
 
-    private fun signIn(email: String, password: String) {
+    private fun signIn(email: String, password: String, context:Context) {
         auth.signInWithEmailAndPassword(email,password)
             .addOnCompleteListener(this) {
                 task ->
                 if (task.isSuccessful) {
                     i("Sign in with email:success")
+                    Toast.makeText(baseContext, "Authentication success.", Toast.LENGTH_SHORT).show()
                     val user = auth.currentUser
+                    i("Po toascie")
                     updateUI(user)
+
                 }else {
                     i("Sign in with email: failure")
                     Toast.makeText(baseContext, "Authentication failed.", Toast.LENGTH_SHORT).show()
@@ -191,7 +193,13 @@ class LoginActivity: ComponentActivity(){
     private fun reload() {
     }
     private fun updateUI(user: FirebaseUser?) {
-        i("Dzialaaaaa!!!!!")
+        val intent:Intent
+        if(user != null){
+            intent = Intent(this, MainScreenActivity::class.java)
+        } else {
+            intent = Intent(this, LoginActivity::class.java)
+        }
+        startActivity(intent)
     }
 
 }

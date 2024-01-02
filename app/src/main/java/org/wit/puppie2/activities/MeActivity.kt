@@ -1,6 +1,5 @@
 package org.wit.puppie2.activities
 
-
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -38,7 +37,6 @@ import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -47,7 +45,6 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -63,9 +60,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.lifecycleScope
 import coil.compose.AsyncImage
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
@@ -78,30 +72,15 @@ import kotlinx.coroutines.launch
 import org.wit.puppie2.dao.FStorage
 import org.wit.puppie2.main.MainActivity
 import org.wit.puppie2.models.Place
-import org.wit.puppie2.network.WeatherApi
-import org.wit.puppie2.network.WeatherApiService
 import org.wit.puppie2.utilities.Helpers
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.converter.scalars.ScalarsConverterFactory
-import timber.log.Timber.Forest.i
-import java.lang.Exception
+import timber.log.Timber
 
-
-class MainScreenActivity : ComponentActivity() {
+class MeActivity:ComponentActivity() {
     private lateinit var app: MainActivity
     private lateinit var storage: FStorage
     private lateinit var auth: FirebaseAuth
     private lateinit var database: FirebaseFirestore
     private lateinit var firabaseStorage: StorageReference
-    private val _status = MutableLiveData<String>()
-    val status: LiveData<String> = _status
-
-
-
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -109,36 +88,33 @@ class MainScreenActivity : ComponentActivity() {
         database = Firebase.firestore
         firabaseStorage = Firebase.storage("gs://puppie2.appspot.com").reference
 
+
         app = application as MainActivity
 
         setContent {  createScaffold()}
-
     }
 
-
-
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun createScaffold() {
-        
+
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
         val scrollState = rememberScrollState()
 
         auth = Firebase.auth
-        i("AUTH USER! + ${Helpers().getHashedString(auth.currentUser?.email.toString())}")
+        Timber.i("AUTH USER! + ${Helpers().getHashedString(auth.currentUser?.email.toString())}")
         storage.getPerson(Helpers().getHashedString(auth.currentUser?.email.toString()))
 
         val items = listOf("News", "Me")
 
-        
+
         ModalNavigationDrawer(
             drawerState = drawerState ,
             drawerContent = {
-        ModalDrawerSheet {
-            getNavigationDrawer()
-        } }) {
+                ModalDrawerSheet {
+                    getNavigationDrawer()
+                } }) {
             Scaffold(
                 topBar = {
                     TopAppBar(
@@ -218,15 +194,19 @@ class MainScreenActivity : ComponentActivity() {
                     var url by remember {
                         mutableStateOf("")
                     }
-                    database.collection("places").get().addOnSuccessListener {
+                    var user by remember {
+                        mutableStateOf("")
+                    }
+                    database.collection("places").whereEqualTo("user",Helpers().getHashedString(auth.currentUser?.email.toString())).get().addOnSuccessListener {
                             documents -> for (doc in documents) {
-                        i("PLACE IN LIST = ${doc.data.get("name")}")
+                        Timber.i("PLACE IN LIST = ${doc.data.get("name")}")
                         name = doc.data.get("name").toString()
                         address = doc.data.get("address").toString()
                         lat = doc.data.get("lat").toString()
                         lon = doc.data.get("lon").toString()
                         createdAt = doc.data.get("createdAt").toString()
                         pickedImage = doc.data.get("pickedImage").toString()
+                        user = doc.data.get("user").toString()
 
 
                         list.add(
@@ -236,15 +216,16 @@ class MainScreenActivity : ComponentActivity() {
                                 lat = lat,
                                 lon = lon,
                                 createdAt = createdAt,
-                                pickedImage = url))
+                                pickedImage = url,
+                                user = user))
 
                     }
                     }.addOnFailureListener{
-                        i("FAILURE IN GET ALL PLACES = $it")
+                        Timber.i("FAILURE IN GET ALL PLACES = $it")
                     }
                     LazyColumn {
 
-                        
+
                         itemsIndexed(list) {index, item ->
 
 
@@ -252,17 +233,18 @@ class MainScreenActivity : ComponentActivity() {
 
                                 firabaseStorage.child(pickedImage).downloadUrl.addOnSuccessListener {
                                     url = it.toString()!!
-                                    i("URL = ${url}")
+                                    Timber.i("URL = ${url}")
                                 }.addOnFailureListener{
-                                    i("DOWNLOADING URL FAILED")
+                                    Timber.i("DOWNLOADING URL FAILED")
                                 }
-                                i("INSIDE LIST = ${it.pickedImage}")
+                                Timber.i("INSIDE LIST = ${it.pickedImage}")
                                 getCard(place = Place(name = it.name,
                                     address = it.address,
                                     lat = it.lat,
                                     lon = it.lon,
                                     createdAt = it.createdAt,
-                                    pickedImage = url))
+                                    pickedImage = url,
+                                    user = it.user))
                             }
                         }
                     }
@@ -270,16 +252,49 @@ class MainScreenActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    @Composable
+    fun getNavigationDrawer(){
+        ModalDrawerSheet {
+            Text(
+                text = "Navigation Menu",
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth(),
+            )
+            Divider()
+            NavigationDrawerItem(label = {
+                Text(text = "Profile", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())},
+                selected =  false,
+                onClick = { moveToActivity("Profile")})
+            Divider()
+            NavigationDrawerItem(label = {
+                Text(text = "Settings", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())},
+                selected =  false,
+                onClick = { moveToActivity("Settings")})
+            Divider()
+            NavigationDrawerItem(label = {
+                Text(text = "About us", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())},
+                selected =  false,
+                onClick = { moveToActivity("About")})
+        }
+    }
+
+
+    @Composable
+    fun getIcon(name: String) {
+
+        when (name) {
+            "News" -> Icon(Icons.Rounded.Feed, "Feed")
+            "Me" -> Icon(Icons.Rounded.List, "List")
         }
 
-    @Composable
-    fun UiPreview() {
-        createScaffold()
-
     }
+
     @Composable
     fun getCard(place: Place){
-        i("Inside getCard = $place")
+        Timber.i("Inside getCard = $place")
         var showDialog by remember {
             mutableStateOf(false)
         }
@@ -314,13 +329,13 @@ class MainScreenActivity : ComponentActivity() {
                         Icon(imageVector = Icons.Rounded.LocationOn, contentDescription = "location_on")
                         Text(text = place.address!!, textAlign = TextAlign.Left)
                     }
-                    
+
                     Button(onClick = { showDialog = true }, modifier = Modifier
                         .fillMaxWidth()
                         .fillMaxHeight()) {
                         Text(text = "Details", textAlign = TextAlign.Center)
                     }
-                    i("ShowDialog = $showDialog")
+                    Timber.i("ShowDialog = $showDialog")
                     if (showDialog){
                         getDialog(place = place, showDialog)
                     }
@@ -345,51 +360,14 @@ class MainScreenActivity : ComponentActivity() {
 
     }
     @Composable
-    fun getNavigationDrawer(){
-            ModalDrawerSheet {
-                Text(
-                    text = "Navigation Menu",
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                )
-                Divider()
-                NavigationDrawerItem(label = {
-                    Text(text = "Profile", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())},
-                    selected =  false,
-                    onClick = { moveToActivity("Profile")})
-                Divider()
-                NavigationDrawerItem(label = {
-                    Text(text = "Settings", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())},
-                    selected =  false,
-                    onClick = { moveToActivity("Settings")})
-                Divider()
-                NavigationDrawerItem(label = {
-                    Text(text = "About us", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())},
-                    selected =  false,
-                    onClick = { moveToActivity("About")})
-                }
-    }
-
-
-    @Composable
-    fun getIcon(name: String) {
-
-        when (name) {
-            "News" -> Icon(Icons.Rounded.Feed, "Feed")
-            "Me" -> Icon(Icons.Rounded.List, "List")
-        }
-
-    }
-
-    @Composable
     fun getDialog(place: Place, showDialog:Boolean){
 
         if (showDialog) {
             Dialog(onDismissRequest = { }, properties = DialogProperties(
                 dismissOnBackPress = true,
                 dismissOnClickOutside = true
-            )) {
+            )
+            ) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -397,9 +375,6 @@ class MainScreenActivity : ComponentActivity() {
                         .padding(16.dp),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    LaunchedEffect(Unit ){
-                        getCurrentWeather()
-                    }
                     Column(
                         modifier = Modifier
                             .fillMaxSize(),
@@ -424,7 +399,7 @@ class MainScreenActivity : ComponentActivity() {
                             onClick = { reload() },
                             modifier = Modifier.padding(30.dp)
                         ) {
-                            i("showDialog = ${showDialog}")
+                            Timber.i("showDialog = ${showDialog}")
                             Text(text = "Go back")
                         }
                     }
@@ -440,29 +415,16 @@ class MainScreenActivity : ComponentActivity() {
             "Profile" -> intent = Intent(this, ProfileActivity::class.java)
             "About" -> intent = Intent(this, AboutActivity::class.java)
             "Settings" -> intent = Intent(this,SettingsActivity::class.java)
-            "Me" -> intent = Intent(this,MeActivity::class.java)
-            "News" -> reload()
+            "News" -> intent = Intent(this, MainScreenActivity::class.java)
+            "Me" -> reload()
         }
         startActivity(intent)
     }
 
-    fun reload(){
-        val intent = Intent(this, MainScreenActivity::class.java)
+    private fun reload(){
+        val intent = Intent(this, MeActivity::class.java)
         startActivity(intent)
-    }
-    private fun getCurrentWeather() {
-            try {
-                val result =WeatherApi.retrofitService.getCurrentWeather("123","123", "")
-                i("DATAAAAA!!!! = ${_status.value}")
-            }catch (e: Exception){
-                i("FAIL!!! ${e.message}")
-            }
-
-
     }
 
 
 }
-
-
-
